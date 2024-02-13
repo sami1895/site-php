@@ -17,7 +17,7 @@ services:
     build:
       context: .
       dockerfile: ./Dockerfile
-    image: 'triple3a/laravel-app'
+    image: 'imas10/comingsoon-pages:0.0.01'
     volumes:
       - . /var/www/html/
     ports:
