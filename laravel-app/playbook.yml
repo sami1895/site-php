@@ -18,9 +18,12 @@
     # Make sure to change the image name with your personal dockerhub account and reposiroty 
     command: docker build -t comingsoon-pages .
 
+  - name: tag the docker image
+    command: docker tag comingsoon-pages imas10/comingsoon-pages:0.0.01
+
   - name: push image to dockerhub
     # Make sure to change the image name with your personal dockerhub account and reposiroty 
-    command: docker push imas10/comingsoon-pages
+    command: docker push imas10/comingsoon-pages:0.0.01
 
 
 
