@@ -25,11 +25,6 @@ RUN apt-get update && apt-get install -y \
     && docker-php-ext-install mysqli \
     && docker-php-ext-install zip \
     && docker-php-source delete
-    composer install 
-    mv .env.example .env 
-    php artisan cache:clear  
-    composer dump-autoload 
-    php artisan key:generate
 
 
 COPY ./vhost.conf /etc/apache2/sites-available/000-default.conf
