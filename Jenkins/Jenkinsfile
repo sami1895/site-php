@@ -7,23 +7,75 @@ pipeline {
     stages {
         stage('Docker Login') {
             steps {
-                sh 'echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin'
+              sh 'echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin'
             }
         }
         stage('Build & push Dockerfile') {
             steps {
-                sh """
-                cd laravel-app
-                ansible-playbook playbook.yml
-                """
+              sh """
+              cd Kubernetes/comingsoon/
+              ansible-playbook playbook.yml
+              """
             }
         }
-        stage('Run Dockercompose playbook') {
+        stage('Delete Cluster') {
             steps {
-                sh """
-                cd laravel-app
-                ansible-playbook playbook-dcompose.yml 
-                """
+              // You will need to install CloudBees AWS Credentials Plugin in Jenkins and add AWS Credentials first 
+                withCredentials([[
+                  $class: 'AmazonWebServicesCredentialsBinding',
+                  credentialsId: "aws-credentials",
+                  accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                  secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+                  ]]) {
+                  sh "eksctl delete cluster --name comingsoon-cluster --us-east-1"
+                  sleep(time: 180, unit: "SECONDS")
+                }
+            }
+        }
+        stage('Create Cluster') {
+            steps {
+              // You will need to install CloudBees AWS Credentials Plugin in Jenkins and add AWS Credentials first 
+                withCredentials([[
+                  $class: 'AmazonWebServicesCredentialsBinding',
+                  credentialsId: "aws-credentials",
+                  accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                  secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+                  ]]) {
+                  sh """
+                  eksctl create cluster --name comingsoon-cluster --region us-east-1 --nodes=2
+                  aws eks update-kubeconfig --name comingsoon-cluster
+                  """
+                }
+            }
+        }
+        stage('Create Namespace') {
+            steps {
+              // You will need to install CloudBees AWS Credentials Plugin in Jenkins and add AWS Credentials first 
+                withCredentials([[
+                  $class: 'AmazonWebServicesCredentialsBinding',
+                  credentialsId: "aws-credentials",
+                  accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                  secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+                  ]]) {
+                  sh "kubectl create namespace comingsoon"
+                }
+            }
+        }
+        stage('Deploy') {
+            steps {
+              // You will need to install CloudBees AWS Credentials Plugin in Jenkins and add AWS Credentials first 
+                withCredentials([[
+                  $class: 'AmazonWebServicesCredentialsBinding',
+                  credentialsId: "aws-credentials",
+                  accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                  secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+                  ]]) {
+                  sh """
+                  cd laravel-app/comingsoon/k8s
+                  kubectl -n comingsoon apply -f deployment.yaml
+                  kubectl -n comingsoon apply -f services.yaml
+                  """
+                }
             }
         }
     }
